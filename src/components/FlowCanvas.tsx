@@ -1,5 +1,4 @@
-
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -16,6 +15,7 @@ import '@xyflow/react/dist/style.css';
 import { TankNode } from './nodes/TankNode';
 import { ValveNode } from './nodes/ValveNode';
 import { PumpNode } from './nodes/PumpNode';
+import { DeletableEdge } from './edges/DeletableEdge';
 import { Sidebar } from './Sidebar';
 import { EdgeType } from './EdgeTypeSelector';
 
@@ -23,6 +23,12 @@ const nodeTypes = {
   tank: TankNode,
   valve: ValveNode,
   pump: PumpNode,
+};
+
+const edgeTypes = {
+  default: DeletableEdge,
+  straight: DeletableEdge,
+  step: DeletableEdge,
 };
 
 const initialNodes: Node[] = [];
@@ -40,6 +46,7 @@ export function FlowCanvas() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [edgeType, setEdgeType] = useState<EdgeType>('default');
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -66,6 +73,34 @@ export function FlowCanvas() {
     },
     [setEdges, edgeType]
   );
+
+  const onEdgeClick = useCallback((event: React.MouseEvent, edge: Edge) => {
+    event.stopPropagation();
+    setSelectedEdgeId(edge.id);
+  }, []);
+
+  const onPaneClick = useCallback(() => {
+    setSelectedEdgeId(null);
+  }, []);
+
+  // Handle keyboard deletion
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Delete' && selectedEdgeId) {
+        setEdges((edges) => edges.filter((edge) => edge.id !== selectedEdgeId));
+        setSelectedEdgeId(null);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedEdgeId, setEdges]);
+
+  // Update edges to include selection state
+  const edgesWithSelection = edges.map((edge) => ({
+    ...edge,
+    selected: edge.id === selectedEdgeId,
+  }));
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -106,14 +141,17 @@ export function FlowCanvas() {
       <div className="flex-1" ref={reactFlowWrapper}>
         <ReactFlow
           nodes={nodes}
-          edges={edges}
+          edges={edgesWithSelection}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onInit={setReactFlowInstance}
           onDrop={onDrop}
           onDragOver={onDragOver}
+          onEdgeClick={onEdgeClick}
+          onPaneClick={onPaneClick}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           connectionMode={ConnectionMode.Loose}
           fitView
           className="bg-gray-100"
