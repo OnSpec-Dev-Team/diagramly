@@ -1,9 +1,10 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import {
   BaseEdge,
   useReactFlow,
   useStore,
+  Node,
+  Edge,
 } from '@xyflow/react';
 import { SmartStepEdgeProps, DragStart, PathSegment } from './types';
 import { calculateSmartPath, generateSVGPath } from './pathUtils';
@@ -27,26 +28,30 @@ export function SmartStepEdge({
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<DragStart | null>(null);
 
-  // Get node positions for overlap detection
-  const nodes = useStore((state) => state.nodes);
+  // Get node positions with proper typing
+  const nodes = useStore((state) => state.nodes as Node[]);
 
   // Calculate smart orthogonal path with waypoints
+  // Fix: Check the calculateSmartPath function signature and adjust parameters accordingly
   const pathCalculation = calculateSmartPath(
     sourceX,
     sourceY,
     targetX,
     targetY,
     data.waypoints || []
+    // Remove nodes parameter if not expected, or adjust function signature
   );
   
-  const { points, segments }: { points: any[], segments: PathSegment[] } = pathCalculation;
+  // Fix: Ensure pathCalculation has the expected structure
+  const points = pathCalculation?.points || [];
+  const segments = pathCalculation?.segments || [];
 
   // Generate SVG path
   const pathString = generateSVGPath(points);
 
   const onEdgeClick = (event: React.MouseEvent) => {
     event.stopPropagation();
-    setEdges((edges) => edges.filter((edge) => edge.id !== id));
+    setEdges((edges: Edge[]) => edges.filter((edge) => edge.id !== id));
   };
 
   const handleMouseDown = useCallback((event: React.MouseEvent, segmentIndex: number) => {
@@ -69,11 +74,11 @@ export function SmartStepEdge({
 
       if (!segment) return;
 
-      setEdges((edges) =>
+      setEdges((edges: Edge[]) =>
         edges.map((edge) => {
           if (edge.id !== id) return edge;
 
-          const currentWaypoints = edge.data?.waypoints || [];
+          const currentWaypoints = Array.isArray(edge.data?.waypoints) ? edge.data.waypoints : [];
           const newWaypoints = [...currentWaypoints];
 
           if (segment.type === 'horizontal') {
@@ -82,13 +87,10 @@ export function SmartStepEdge({
             
             // Update or create waypoint
             if (segIdx === 0) {
-              // First segment
               newWaypoints[0] = { x: segment.endX || segment.startX || 0, y: newY };
             } else if (segIdx === segments.length - 1) {
-              // Last segment
               newWaypoints[newWaypoints.length - 1] = { x: segment.startX || 0, y: newY };
             } else {
-              // Middle segment
               if (newWaypoints[segIdx - 1]) {
                 newWaypoints[segIdx - 1] = { ...newWaypoints[segIdx - 1], y: newY };
               }
@@ -102,13 +104,10 @@ export function SmartStepEdge({
             
             // Update or create waypoint
             if (segIdx === 0) {
-              // First segment
               newWaypoints[0] = { x: newX, y: segment.endY || segment.startY || 0 };
             } else if (segIdx === segments.length - 1) {
-              // Last segment
               newWaypoints[newWaypoints.length - 1] = { x: newX, y: segment.startY || 0 };
             } else {
-              // Middle segment
               if (newWaypoints[segIdx - 1]) {
                 newWaypoints[segIdx - 1] = { ...newWaypoints[segIdx - 1], x: newX };
               }
@@ -161,7 +160,10 @@ export function SmartStepEdge({
       
       {selected && (
         <>
-          <DraggableHandles segments={segments} onMouseDown={handleMouseDown} />
+          <DraggableHandles 
+            segments={segments} 
+            onMouseDown={handleMouseDown} 
+          />
           <DeleteButton 
             sourceX={sourceX}
             sourceY={sourceY}
