@@ -2,7 +2,7 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
-export type EdgeType = 'default' | 'straight' | 'step';
+export type EdgeType = 'default' | 'straight' | 'step' | 'smartStep';
 
 interface EdgeTypeSelectorProps {
   value: EdgeType;
@@ -23,6 +23,7 @@ export function EdgeTypeSelector({ value, onChange }: EdgeTypeSelectorProps) {
           <SelectItem value="default">Bezier (Default)</SelectItem>
           <SelectItem value="straight">Straight</SelectItem>
           <SelectItem value="step">Draggable Step</SelectItem>
+          <SelectItem value="smartStep">Smart Step (Draw.io Style)</SelectItem>
         </SelectContent>
       </Select>
     </div>

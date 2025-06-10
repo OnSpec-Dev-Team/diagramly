@@ -1,3 +1,4 @@
+
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import {
   ReactFlow,
@@ -17,6 +18,7 @@ import { ValveNode } from './nodes/ValveNode';
 import { PumpNode } from './nodes/PumpNode';
 import { DeletableEdge } from './edges/DeletableEdge';
 import { DraggableStepEdge } from './edges/DraggableStepEdge';
+import { SmartStepEdge } from './edges/SmartStepEdge';
 import { Sidebar } from './Sidebar';
 import { EdgeType } from './EdgeTypeSelector';
 
@@ -30,15 +32,71 @@ const edgeTypes = {
   default: DeletableEdge,
   straight: DeletableEdge,
   step: DraggableStepEdge,
+  smartStep: SmartStepEdge,
 };
 
-const initialNodes: Node[] = [];
-const initialEdges: Edge[] = [];
+// Add some example nodes to demonstrate the smart step edges
+const initialNodes: Node[] = [
+  {
+    id: 'demo-tank-1',
+    type: 'tank',
+    position: { x: 100, y: 100 },
+    data: { label: 'Tank A' },
+  },
+  {
+    id: 'demo-valve-1',
+    type: 'valve',
+    position: { x: 400, y: 200 },
+    data: { label: 'Valve B' },
+  },
+  {
+    id: 'demo-pump-1',
+    type: 'pump',
+    position: { x: 200, y: 350 },
+    data: { label: 'Pump C' },
+  },
+];
 
-let nodeId = 0;
+// Add example smart step edges
+const initialEdges: Edge[] = [
+  {
+    id: 'demo-edge-1',
+    source: 'demo-tank-1',
+    target: 'demo-valve-1',
+    type: 'smartStep',
+    label: 'Smart Step',
+    labelStyle: {
+      fontSize: 12,
+      fontWeight: 500,
+      fill: '#374151',
+      backgroundColor: 'white',
+      padding: '2px 4px',
+      borderRadius: '4px',
+      border: '1px solid #e5e7eb',
+    },
+  },
+  {
+    id: 'demo-edge-2',
+    source: 'demo-valve-1',
+    target: 'demo-pump-1',
+    type: 'smartStep',
+    label: 'Smart Step',
+    labelStyle: {
+      fontSize: 12,
+      fontWeight: 500,
+      fill: '#374151',
+      backgroundColor: 'white',
+      padding: '2px 4px',
+      borderRadius: '4px',
+      border: '1px solid #e5e7eb',
+    },
+  },
+];
+
+let nodeId = 3; // Start after demo nodes
 const getNodeId = () => `node_${nodeId++}`;
 
-let edgeId = 0;
+let edgeId = 2; // Start after demo edges
 const getEdgeId = () => `edge_${edgeId++}`;
 
 export function FlowCanvas() {
@@ -46,7 +104,7 @@ export function FlowCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
-  const [edgeType, setEdgeType] = useState<EdgeType>('default');
+  const [edgeType, setEdgeType] = useState<EdgeType>('smartStep');
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
 
   const onConnect = useCallback(
