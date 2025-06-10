@@ -87,10 +87,12 @@ export function DraggableStepEdge({
                 ...edge,
                 data: {
                   ...edge.data,
-                  horizontalOffset: segmentType === 'horizontal' 
+                  // Horizontal segments move vertically (change verticalOffset)
+                  // Vertical segments move horizontally (change horizontalOffset)
+                  horizontalOffset: segmentType === 'vertical' 
                     ? (data.horizontalOffset || 0) + deltaX * 0.5
                     : (data.horizontalOffset || 0),
-                  verticalOffset: segmentType === 'vertical' 
+                  verticalOffset: segmentType === 'horizontal' 
                     ? (data.verticalOffset || 0) + deltaY * 0.5
                     : (data.verticalOffset || 0),
                 },
@@ -127,9 +129,9 @@ export function DraggableStepEdge({
       
       {selected && (
         <EdgeLabelRenderer>
-          {/* Horizontal segment handle */}
+          {/* First horizontal segment handle - can be moved vertically */}
           <div
-            className="absolute pointer-events-auto cursor-ew-resize"
+            className="absolute pointer-events-auto cursor-ns-resize"
             style={{
               transform: `translate(-50%, -50%) translate(${(sourceX + midX) / 2}px, ${sourceY}px)`,
               width: '12px',
@@ -140,9 +142,9 @@ export function DraggableStepEdge({
             <div className="w-3 h-3 bg-blue-500 hover:bg-blue-600 rounded-full border-2 border-white shadow-lg transition-colors" />
           </div>
 
-          {/* Vertical segment handle */}
+          {/* Vertical segment handle - can be moved horizontally */}
           <div
-            className="absolute pointer-events-auto cursor-ns-resize"
+            className="absolute pointer-events-auto cursor-ew-resize"
             style={{
               transform: `translate(-50%, -50%) translate(${midX}px, ${(sourceY + targetY) / 2}px)`,
               width: '12px',
@@ -153,9 +155,9 @@ export function DraggableStepEdge({
             <div className="w-3 h-3 bg-green-500 hover:bg-green-600 rounded-full border-2 border-white shadow-lg transition-colors" />
           </div>
 
-          {/* Final horizontal segment handle */}
+          {/* Second horizontal segment handle - can be moved vertically */}
           <div
-            className="absolute pointer-events-auto cursor-ew-resize"
+            className="absolute pointer-events-auto cursor-ns-resize"
             style={{
               transform: `translate(-50%, -50%) translate(${(midX + targetX) / 2}px, ${targetY}px)`,
               width: '12px',
