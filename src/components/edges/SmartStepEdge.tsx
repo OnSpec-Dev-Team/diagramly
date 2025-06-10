@@ -16,6 +16,12 @@ interface SmartStepEdgeProps extends EdgeProps {
   };
 }
 
+interface DragStart {
+  x: number;
+  y: number;
+  segmentIndex: number;
+}
+
 export function SmartStepEdge({
   id,
   sourceX,
@@ -31,7 +37,7 @@ export function SmartStepEdge({
 }: SmartStepEdgeProps) {
   const { setEdges } = useReactFlow();
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef<{ x: number; y: number; segmentIndex: number } | null>(null);
+  const dragStartRef = useRef<DragStart | null>(null);
 
   // Get node positions for overlap detection
   const nodes = useStore((state) => state.nodes);
@@ -143,11 +149,12 @@ export function SmartStepEdge({
     };
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!dragStartRef.current) return;
+      const dragStart = dragStartRef.current;
+      if (!dragStart) return;
 
-      const deltaX = moveEvent.clientX - dragStartRef.current.x;
-      const deltaY = moveEvent.clientY - dragStartRef.current.y;
-      const segIdx = dragStartRef.current.segmentIndex;
+      const deltaX = moveEvent.clientX - dragStart.x;
+      const deltaY = moveEvent.clientY - dragStart.y;
+      const segIdx = dragStart.segmentIndex;
       const segment = segments[segIdx];
 
       if (!segment) return;
@@ -212,7 +219,7 @@ export function SmartStepEdge({
       );
 
       dragStartRef.current = { 
-        ...dragStartRef.current, 
+        ...dragStart, 
         x: moveEvent.clientX, 
         y: moveEvent.clientY 
       };
