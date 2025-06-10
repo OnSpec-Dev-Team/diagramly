@@ -2,10 +2,13 @@
 import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Circle } from 'lucide-react';
+import { NodeDeleteButton } from './NodeDeleteButton';
 
-export const TankNode = memo(({ data }: { data: { label: string } }) => {
+export const TankNode = memo(({ data, id }: { data: { label: string }; id: string }) => {
   return (
-    <div className="bg-white border-2 border-blue-300 rounded-lg shadow-lg min-w-[120px] hover:shadow-xl transition-shadow duration-200">
+    <div className="group relative bg-white border-2 border-blue-300 rounded-lg shadow-lg min-w-[120px] hover:shadow-xl transition-shadow duration-200">
+      <NodeDeleteButton nodeId={id} />
+      
       <Handle
         type="target"
         position={Position.Top}
