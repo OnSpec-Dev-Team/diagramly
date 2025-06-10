@@ -5,7 +5,7 @@ import {
   useReactFlow,
   useStore,
 } from '@xyflow/react';
-import { SmartStepEdgeProps, DragStart } from './types';
+import { SmartStepEdgeProps, DragStart, PathSegment } from './types';
 import { calculateSmartPath, generateSVGPath } from './pathUtils';
 import { DraggableHandles } from './DraggableHandles';
 import { DeleteButton } from './DeleteButton';
@@ -31,13 +31,15 @@ export function SmartStepEdge({
   const nodes = useStore((state) => state.nodes);
 
   // Calculate smart orthogonal path with waypoints
-  const { points, segments } = calculateSmartPath(
+  const pathCalculation = calculateSmartPath(
     sourceX,
     sourceY,
     targetX,
     targetY,
     data.waypoints || []
   );
+  
+  const { points, segments }: { points: any[], segments: PathSegment[] } = pathCalculation;
 
   // Generate SVG path
   const pathString = generateSVGPath(points);
