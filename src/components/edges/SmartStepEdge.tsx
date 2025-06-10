@@ -218,10 +218,11 @@ export function SmartStepEdge({
         })
       );
 
+      // Update dragStart with new position
       dragStartRef.current = { 
-        ...dragStart, 
         x: moveEvent.clientX, 
-        y: moveEvent.clientY 
+        y: moveEvent.clientY,
+        segmentIndex: dragStart.segmentIndex
       };
     };
 
