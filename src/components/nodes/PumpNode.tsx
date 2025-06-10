@@ -10,6 +10,7 @@ export const PumpNode = memo(({ data }: { data: { label: string } }) => {
         type="target"
         position={Position.Left}
         className="w-3 h-3 bg-purple-500 border-2 border-white"
+        isConnectable={true}
       />
       
       <div className="p-4 text-center">
@@ -26,6 +27,7 @@ export const PumpNode = memo(({ data }: { data: { label: string } }) => {
         type="source"
         position={Position.Right}
         className="w-3 h-3 bg-purple-500 border-2 border-white"
+        isConnectable={true}
       />
     </div>
   );

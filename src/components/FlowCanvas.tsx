@@ -10,13 +10,14 @@ import {
   Connection,
   Node,
   Edge,
-  ReactFlowProvider,
+  ConnectionMode,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { TankNode } from './nodes/TankNode';
 import { ValveNode } from './nodes/ValveNode';
 import { PumpNode } from './nodes/PumpNode';
 import { Sidebar } from './Sidebar';
+import { EdgeType } from './EdgeTypeSelector';
 
 const nodeTypes = {
   tank: TankNode,
@@ -30,15 +31,40 @@ const initialEdges: Edge[] = [];
 let nodeId = 0;
 const getNodeId = () => `node_${nodeId++}`;
 
+let edgeId = 0;
+const getEdgeId = () => `edge_${edgeId++}`;
+
 export function FlowCanvas() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+  const [edgeType, setEdgeType] = useState<EdgeType>('default');
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
+    (params: Connection) => {
+      const edge: Edge = {
+        ...params,
+        id: getEdgeId(),
+        type: edgeType,
+        label: edgeType.charAt(0).toUpperCase() + edgeType.slice(1),
+        labelStyle: {
+          fontSize: 12,
+          fontWeight: 500,
+          fill: '#374151',
+          backgroundColor: 'white',
+          padding: '2px 4px',
+          borderRadius: '4px',
+          border: '1px solid #e5e7eb',
+        },
+        labelBgStyle: {
+          fill: 'white',
+          fillOpacity: 0.8,
+        },
+      };
+      setEdges((eds) => addEdge(edge, eds));
+    },
+    [setEdges, edgeType]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -65,7 +91,8 @@ export function FlowCanvas() {
         id: getNodeId(),
         type,
         position,
-        data: { label: `${type.charAt(0).toUpperCase() + type.slice(1)}` },
+        data: { label: `${type.charAt(0).toUpperCase() + type.slice(1)} ${nodeId}` },
+        draggable: true,
       };
 
       setNodes((nds) => nds.concat(newNode));
@@ -75,7 +102,7 @@ export function FlowCanvas() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar />
+      <Sidebar edgeType={edgeType} onEdgeTypeChange={setEdgeType} />
       <div className="flex-1" ref={reactFlowWrapper}>
         <ReactFlow
           nodes={nodes}
@@ -87,8 +114,12 @@ export function FlowCanvas() {
           onDrop={onDrop}
           onDragOver={onDragOver}
           nodeTypes={nodeTypes}
+          connectionMode={ConnectionMode.Loose}
           fitView
           className="bg-gray-100"
+          nodesDraggable={true}
+          nodesConnectable={true}
+          elementsSelectable={true}
         >
           <Controls className="bg-white shadow-lg border border-gray-200" />
           <Background color="#e5e7eb" gap={20} />

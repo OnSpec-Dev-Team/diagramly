@@ -10,6 +10,7 @@ export const TankNode = memo(({ data }: { data: { label: string } }) => {
         type="target"
         position={Position.Top}
         className="w-3 h-3 bg-blue-500 border-2 border-white"
+        isConnectable={true}
       />
       
       <div className="p-4 text-center">
@@ -26,6 +27,7 @@ export const TankNode = memo(({ data }: { data: { label: string } }) => {
         type="source"
         position={Position.Bottom}
         className="w-3 h-3 bg-blue-500 border-2 border-white"
+        isConnectable={true}
       />
     </div>
   );

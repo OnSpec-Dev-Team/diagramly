@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Layers, Circle, Square } from 'lucide-react';
+import { EdgeTypeSelector, EdgeType } from './EdgeTypeSelector';
 
 const components = [
   {
@@ -26,7 +27,12 @@ const components = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  edgeType: EdgeType;
+  onEdgeTypeChange: (type: EdgeType) => void;
+}
+
+export function Sidebar({ edgeType, onEdgeTypeChange }: SidebarProps) {
   const onDragStart = (event: React.DragEvent, nodeType: string) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
@@ -39,34 +45,38 @@ export function Sidebar() {
         <p className="text-sm text-gray-600 mt-1">Drag components to the canvas</p>
       </div>
       
-      <div className="p-4 space-y-3">
-        {components.map((component) => {
-          const IconComponent = component.icon;
-          return (
-            <div
-              key={component.type}
-              className="group cursor-grab active:cursor-grabbing bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 transition-all duration-200 hover:shadow-md"
-              onDragStart={(event) => onDragStart(event, component.type)}
-              draggable
-            >
-              <div className="flex items-center space-x-3">
-                <div className={`p-2 rounded-lg ${component.color} text-white group-hover:scale-110 transition-transform duration-200`}>
-                  <IconComponent size={20} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-900">{component.label}</h3>
-                  <p className="text-xs text-gray-500">{component.description}</p>
+      <div className="p-4">
+        <EdgeTypeSelector value={edgeType} onChange={onEdgeTypeChange} />
+        
+        <div className="space-y-3">
+          {components.map((component) => {
+            const IconComponent = component.icon;
+            return (
+              <div
+                key={component.type}
+                className="group cursor-grab active:cursor-grabbing bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 transition-all duration-200 hover:shadow-md"
+                onDragStart={(event) => onDragStart(event, component.type)}
+                draggable
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 rounded-lg ${component.color} text-white group-hover:scale-110 transition-transform duration-200`}>
+                    <IconComponent size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-900">{component.label}</h3>
+                    <p className="text-xs text-gray-500">{component.description}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
       
       <div className="absolute bottom-4 left-4 right-4">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <p className="text-xs text-blue-700">
-            💡 Tip: Drag components from the palette to create nodes on the canvas. Use mouse wheel to zoom and drag to pan.
+            💡 Tip: Select an edge type, then drag between node handles to connect them. Nodes are draggable on the canvas.
           </p>
         </div>
       </div>
