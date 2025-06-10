@@ -16,6 +16,7 @@ import { TankNode } from './nodes/TankNode';
 import { ValveNode } from './nodes/ValveNode';
 import { PumpNode } from './nodes/PumpNode';
 import { DeletableEdge } from './edges/DeletableEdge';
+import { DraggableStepEdge } from './edges/DraggableStepEdge';
 import { Sidebar } from './Sidebar';
 import { EdgeType } from './EdgeTypeSelector';
 
@@ -28,7 +29,7 @@ const nodeTypes = {
 const edgeTypes = {
   default: DeletableEdge,
   straight: DeletableEdge,
-  step: DeletableEdge,
+  step: DraggableStepEdge,
 };
 
 const initialNodes: Node[] = [];

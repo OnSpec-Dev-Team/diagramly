@@ -22,7 +22,7 @@ export function EdgeTypeSelector({ value, onChange }: EdgeTypeSelectorProps) {
         <SelectContent>
           <SelectItem value="default">Bezier (Default)</SelectItem>
           <SelectItem value="straight">Straight</SelectItem>
-          <SelectItem value="step">Step</SelectItem>
+          <SelectItem value="step">Draggable Step</SelectItem>
         </SelectContent>
       </Select>
     </div>
