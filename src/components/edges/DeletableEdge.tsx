@@ -22,10 +22,16 @@ export function DeletableEdge({
   style = {},
   markerEnd,
   selected,
-}: EdgeProps) {
-  const { setEdges } = useReactFlow();
+  ...rest
+}: EdgeProps & { selected?: boolean }) {
+  const { setEdges, getEdges } = useReactFlow();
 
-  // Get the appropriate path based on edge type - defaulting to bezier
+  // Get the edge type from the edges state
+  const edges = getEdges();
+  const currentEdge = edges.find(edge => edge.id === id);
+  const edgeType = currentEdge?.type || 'default';
+
+  // Get the appropriate path based on edge type
   const getEdgePath = () => {
     const pathParams = {
       sourceX,
@@ -36,9 +42,15 @@ export function DeletableEdge({
       targetPosition,
     };
 
-    // Since we can't access type from props, we'll default to bezier
-    // The edge type is handled by React Flow internally
-    return getBezierPath(pathParams);
+    switch (edgeType) {
+      case 'straight':
+        return getStraightPath(pathParams);
+      case 'step':
+        return getSmoothStepPath(pathParams);
+      case 'default':
+      default:
+        return getBezierPath(pathParams);
+    }
   };
 
   const [edgePath, labelX, labelY] = getEdgePath();
