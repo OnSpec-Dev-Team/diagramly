@@ -9,16 +9,14 @@ export const calculateSmartPath = (
   waypoints: { x: number; y: number }[] = []
 ): PathCalculation => {
   if (waypoints.length === 0) {
-    // Default routing: simple L-shape or Z-shape
-    const midX = (sourceX + targetX) / 2;
-    const midY = (sourceY + targetY) / 2;
+    // Default routing: ensure strictly orthogonal paths
+    const deltaX = targetX - sourceX;
+    const deltaY = targetY - sourceY;
     
-    // Determine best routing based on node positions
-    const deltaX = Math.abs(targetX - sourceX);
-    const deltaY = Math.abs(targetY - sourceY);
-    
-    if (deltaX > deltaY) {
-      // Horizontal priority
+    // Use a more intelligent routing algorithm
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      // Horizontal priority - go right/left first, then up/down
+      const midX = sourceX + deltaX * 0.5;
       return {
         points: [
           { x: sourceX, y: sourceY },
@@ -33,7 +31,8 @@ export const calculateSmartPath = (
         ],
       };
     } else {
-      // Vertical priority
+      // Vertical priority - go up/down first, then right/left
+      const midY = sourceY + deltaY * 0.5;
       return {
         points: [
           { x: sourceX, y: sourceY },
@@ -50,37 +49,98 @@ export const calculateSmartPath = (
     }
   }
 
-  // Use custom waypoints
-  const points = [
+  // Use custom waypoints - ensure orthogonal connections
+  const allPoints = [
     { x: sourceX, y: sourceY },
     ...waypoints,
     { x: targetX, y: targetY },
   ];
 
+  // Create orthogonal path through waypoints
+  const points: PathPoint[] = [];
   const segments: PathSegment[] = [];
-  for (let i = 0; i < points.length - 1; i++) {
-    const start = points[i];
-    const end = points[i + 1];
-    
-    if (start.x === end.x) {
+
+  for (let i = 0; i < allPoints.length - 1; i++) {
+    const current = allPoints[i];
+    const next = allPoints[i + 1];
+
+    if (i === 0) {
+      points.push(current);
+    }
+
+    // Ensure orthogonal connection between current and next point
+    if (current.x !== next.x && current.y !== next.y) {
+      // Need intermediate point to maintain orthogonal path
+      // Decide whether to go horizontal first or vertical first
+      const deltaX = Math.abs(next.x - current.x);
+      const deltaY = Math.abs(next.y - current.y);
+      
+      if (deltaX >= deltaY) {
+        // Go horizontal first
+        const intermediatePoint = { x: next.x, y: current.y };
+        points.push(intermediatePoint);
+        
+        // Add horizontal segment
+        segments.push({
+          type: 'horizontal',
+          startX: Math.min(current.x, next.x),
+          endX: Math.max(current.x, next.x),
+          y: current.y,
+          index: segments.length,
+        });
+        
+        // Add vertical segment
+        segments.push({
+          type: 'vertical',
+          x: next.x,
+          startY: Math.min(current.y, next.y),
+          endY: Math.max(current.y, next.y),
+          index: segments.length,
+        });
+      } else {
+        // Go vertical first
+        const intermediatePoint = { x: current.x, y: next.y };
+        points.push(intermediatePoint);
+        
+        // Add vertical segment
+        segments.push({
+          type: 'vertical',
+          x: current.x,
+          startY: Math.min(current.y, next.y),
+          endY: Math.max(current.y, next.y),
+          index: segments.length,
+        });
+        
+        // Add horizontal segment
+        segments.push({
+          type: 'horizontal',
+          startX: Math.min(current.x, next.x),
+          endX: Math.max(current.x, next.x),
+          y: next.y,
+          index: segments.length,
+        });
+      }
+    } else if (current.x === next.x) {
       // Vertical segment
       segments.push({
         type: 'vertical',
-        x: start.x,
-        startY: Math.min(start.y, end.y),
-        endY: Math.max(start.y, end.y),
-        index: i,
+        x: current.x,
+        startY: Math.min(current.y, next.y),
+        endY: Math.max(current.y, next.y),
+        index: segments.length,
       });
     } else {
       // Horizontal segment
       segments.push({
         type: 'horizontal',
-        startX: Math.min(start.x, end.x),
-        endX: Math.max(start.x, end.x),
-        y: start.y,
-        index: i,
+        startX: Math.min(current.x, next.x),
+        endX: Math.max(current.x, next.x),
+        y: current.y,
+        index: segments.length,
       });
     }
+
+    points.push(next);
   }
 
   return { points, segments };

@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef } from 'react';
 import {
   BaseEdge,
@@ -32,17 +33,14 @@ export function SmartStepEdge({
   const nodes = useStore((state) => state.nodes as Node[]);
 
   // Calculate smart orthogonal path with waypoints
-  // Fix: Check the calculateSmartPath function signature and adjust parameters accordingly
   const pathCalculation = calculateSmartPath(
     sourceX,
     sourceY,
     targetX,
     targetY,
     data.waypoints || []
-    // Remove nodes parameter if not expected, or adjust function signature
   );
   
-  // Fix: Ensure pathCalculation has the expected structure
   const points = pathCalculation?.points || [];
   const segments = pathCalculation?.segments || [];
 
@@ -78,41 +76,50 @@ export function SmartStepEdge({
         edges.map((edge) => {
           if (edge.id !== id) return edge;
 
-          const currentWaypoints = Array.isArray(edge.data?.waypoints) ? edge.data.waypoints : [];
-          const newWaypoints = [...currentWaypoints];
-
+          const currentWaypoints = Array.isArray(edge.data?.waypoints) ? [...edge.data.waypoints] : [];
+          
           if (segment.type === 'horizontal') {
-            // Moving horizontal segment vertically
-            const newY = (segment.y || 0) + deltaY * 0.5;
+            // Moving horizontal segment vertically - adjust Y coordinate
+            const newY = (segment.y || 0) + deltaY * 0.3; // Reduced sensitivity for smoother movement
             
-            // Update or create waypoint
-            if (segIdx === 0) {
-              newWaypoints[0] = { x: segment.endX || segment.startX || 0, y: newY };
-            } else if (segIdx === segments.length - 1) {
-              newWaypoints[newWaypoints.length - 1] = { x: segment.startX || 0, y: newY };
-            } else {
-              if (newWaypoints[segIdx - 1]) {
-                newWaypoints[segIdx - 1] = { ...newWaypoints[segIdx - 1], y: newY };
+            // Update waypoints to maintain orthogonal path
+            const waypointIndex = Math.floor(segIdx / 2);
+            
+            if (currentWaypoints.length === 0) {
+              // Create initial waypoints based on segment position
+              if (segIdx === 0) {
+                currentWaypoints.push({ x: (segment.endX || segment.startX || 0), y: newY });
+              } else if (segIdx === 2) {
+                currentWaypoints.push({ x: (segment.startX || 0), y: newY });
+              } else {
+                currentWaypoints.push({ x: (segment.startX || 0) + ((segment.endX || 0) - (segment.startX || 0)) * 0.5, y: newY });
               }
-              if (newWaypoints[segIdx]) {
-                newWaypoints[segIdx] = { ...newWaypoints[segIdx], y: newY };
+            } else {
+              // Update existing waypoint
+              if (waypointIndex < currentWaypoints.length) {
+                currentWaypoints[waypointIndex] = { ...currentWaypoints[waypointIndex], y: newY };
               }
             }
           } else {
-            // Moving vertical segment horizontally
-            const newX = (segment.x || 0) + deltaX * 0.5;
+            // Moving vertical segment horizontally - adjust X coordinate
+            const newX = (segment.x || 0) + deltaX * 0.3; // Reduced sensitivity for smoother movement
             
-            // Update or create waypoint
-            if (segIdx === 0) {
-              newWaypoints[0] = { x: newX, y: segment.endY || segment.startY || 0 };
-            } else if (segIdx === segments.length - 1) {
-              newWaypoints[newWaypoints.length - 1] = { x: newX, y: segment.startY || 0 };
-            } else {
-              if (newWaypoints[segIdx - 1]) {
-                newWaypoints[segIdx - 1] = { ...newWaypoints[segIdx - 1], x: newX };
+            // Update waypoints to maintain orthogonal path
+            const waypointIndex = Math.floor(segIdx / 2);
+            
+            if (currentWaypoints.length === 0) {
+              // Create initial waypoints based on segment position
+              if (segIdx === 0) {
+                currentWaypoints.push({ x: newX, y: (segment.endY || segment.startY || 0) });
+              } else if (segIdx === 2) {
+                currentWaypoints.push({ x: newX, y: (segment.startY || 0) });
+              } else {
+                currentWaypoints.push({ x: newX, y: (segment.startY || 0) + ((segment.endY || 0) - (segment.startY || 0)) * 0.5 });
               }
-              if (newWaypoints[segIdx]) {
-                newWaypoints[segIdx] = { ...newWaypoints[segIdx], x: newX };
+            } else {
+              // Update existing waypoint
+              if (waypointIndex < currentWaypoints.length) {
+                currentWaypoints[waypointIndex] = { ...currentWaypoints[waypointIndex], x: newX };
               }
             }
           }
@@ -121,13 +128,13 @@ export function SmartStepEdge({
             ...edge,
             data: {
               ...edge.data,
-              waypoints: newWaypoints.length > 0 ? newWaypoints : undefined,
+              waypoints: currentWaypoints.length > 0 ? currentWaypoints : undefined,
             },
           };
         })
       );
 
-      // Update dragStart with new position
+      // Update dragStart with current position for smooth movement
       dragStartRef.current = { 
         x: moveEvent.clientX, 
         y: moveEvent.clientY,
