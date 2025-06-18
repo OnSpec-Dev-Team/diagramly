@@ -28,7 +28,6 @@ export function SmartStepEdge({
   const { setEdges } = useReactFlow();
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<DragStart | null>(null);
-  const originalPathRef = useRef<any>(null);
 
   // Get node positions with proper typing
   const nodes = useStore((state) => state.nodes as Node[]);
@@ -44,11 +43,6 @@ export function SmartStepEdge({
   
   const points = pathCalculation?.points || [];
   const segments = pathCalculation?.segments || [];
-
-  // Store original path for drag calculations
-  if (!originalPathRef.current) {
-    originalPathRef.current = pathCalculation;
-  }
 
   // Generate SVG path
   const pathString = generateSVGPath(points);
@@ -72,12 +66,9 @@ export function SmartStepEdge({
       segmentIndex 
     };
 
-    // Store the original path calculation for this drag operation
-    originalPathRef.current = pathCalculation;
-
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const dragStart = dragStartRef.current;
-      if (!dragStart || !originalPathRef.current) return;
+      if (!dragStart || !pathCalculation) return;
 
       const deltaX = moveEvent.clientX - dragStart.x;
       const deltaY = moveEvent.clientY - dragStart.y;
@@ -88,7 +79,7 @@ export function SmartStepEdge({
 
       // Calculate updated waypoints based on drag
       const newWaypoints = updatePathWithDrag(
-        originalPathRef.current,
+        pathCalculation,
         dragStart.segmentIndex,
         scaledDeltaX,
         scaledDeltaY,
@@ -116,7 +107,6 @@ export function SmartStepEdge({
     const handleMouseUp = () => {
       setIsDragging(false);
       dragStartRef.current = null;
-      originalPathRef.current = null;
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
