@@ -11,7 +11,9 @@ interface DraggableHandlesProps {
 export function DraggableHandles({ segments, onMouseDown }: DraggableHandlesProps) {
   return (
     <EdgeLabelRenderer>
-      {segments.map((segment, index) => {
+      {segments.map((segment) => {
+        if (!segment.isDraggable) return null;
+        
         let handleX: number;
         let handleY: number;
         let cursor: string;
@@ -28,21 +30,22 @@ export function DraggableHandles({ segments, onMouseDown }: DraggableHandlesProp
 
         return (
           <div
-            key={`handle-${index}`}
-            className={`absolute pointer-events-auto ${cursor}`}
+            key={`handle-${segment.index}`}
+            className={`absolute pointer-events-auto ${cursor} z-50`}
             style={{
               transform: `translate(-50%, -50%) translate(${handleX}px, ${handleY}px)`,
-              width: '12px',
-              height: '12px',
+              width: '16px',
+              height: '16px',
             }}
-            onMouseDown={(e) => onMouseDown(e, index)}
+            onMouseDown={(e) => onMouseDown(e, segment.index)}
           >
             <div 
-              className={`w-3 h-3 rounded-full border-2 border-white shadow-lg transition-colors ${
+              className={`w-4 h-4 rounded-full border-2 border-white shadow-lg transition-all duration-200 ${
                 segment.type === 'horizontal' 
-                  ? 'bg-blue-500 hover:bg-blue-600' 
-                  : 'bg-green-500 hover:bg-green-600'
+                  ? 'bg-blue-500 hover:bg-blue-600 hover:scale-110' 
+                  : 'bg-green-500 hover:bg-green-600 hover:scale-110'
               }`} 
+              title={`Drag to move ${segment.type} segment ${segment.type === 'horizontal' ? 'vertically' : 'horizontally'}`}
             />
           </div>
         );

@@ -9,14 +9,30 @@ export const calculateSmartPath = (
   waypoints: { x: number; y: number }[] = []
 ): PathCalculation => {
   if (waypoints.length === 0) {
-    // Default routing: ensure strictly orthogonal paths
+    // Calculate minimum bend path with orthogonal routing
     const deltaX = targetX - sourceX;
     const deltaY = targetY - sourceY;
     
-    // Use a more intelligent routing algorithm
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-      // Horizontal priority - go right/left first, then up/down
-      const midX = sourceX + deltaX * 0.5;
+    // For minimum bends, we need at most 3 segments (2 bends)
+    if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10) {
+      // Very close nodes - direct connection
+      return {
+        points: [
+          { x: sourceX, y: sourceY },
+          { x: targetX, y: targetY },
+        ],
+        segments: [],
+      };
+    }
+    
+    // Determine optimal routing direction for minimum bends
+    const midX = sourceX + deltaX * 0.5;
+    const midY = sourceY + deltaY * 0.5;
+    
+    // Choose routing based on which direction minimizes total distance
+    const horizontalFirst = Math.abs(deltaX) >= Math.abs(deltaY);
+    
+    if (horizontalFirst) {
       return {
         points: [
           { x: sourceX, y: sourceY },
@@ -25,14 +41,12 @@ export const calculateSmartPath = (
           { x: targetX, y: targetY },
         ],
         segments: [
-          { type: 'horizontal', startX: sourceX, endX: midX, y: sourceY, index: 0 },
-          { type: 'vertical', x: midX, startY: sourceY, endY: targetY, index: 1 },
-          { type: 'horizontal', startX: midX, endX: targetX, y: targetY, index: 2 },
+          { type: 'horizontal', startX: sourceX, endX: midX, y: sourceY, index: 0, isDraggable: false },
+          { type: 'vertical', x: midX, startY: sourceY, endY: targetY, index: 1, isDraggable: true },
+          { type: 'horizontal', startX: midX, endX: targetX, y: targetY, index: 2, isDraggable: false },
         ],
       };
     } else {
-      // Vertical priority - go up/down first, then right/left
-      const midY = sourceY + deltaY * 0.5;
       return {
         points: [
           { x: sourceX, y: sourceY },
@@ -41,22 +55,21 @@ export const calculateSmartPath = (
           { x: targetX, y: targetY },
         ],
         segments: [
-          { type: 'vertical', x: sourceX, startY: sourceY, endY: midY, index: 0 },
-          { type: 'horizontal', startX: sourceX, endX: targetX, y: midY, index: 1 },
-          { type: 'vertical', x: targetX, startY: midY, endY: targetY, index: 2 },
+          { type: 'vertical', x: sourceX, startY: sourceY, endY: midY, index: 0, isDraggable: false },
+          { type: 'horizontal', startX: sourceX, endX: targetX, y: midY, index: 1, isDraggable: true },
+          { type: 'vertical', x: targetX, startY: midY, endY: targetY, index: 2, isDraggable: false },
         ],
       };
     }
   }
 
-  // Use custom waypoints - ensure orthogonal connections
+  // Use custom waypoints with minimum bends
   const allPoints = [
     { x: sourceX, y: sourceY },
     ...waypoints,
     { x: targetX, y: targetY },
   ];
 
-  // Create orthogonal path through waypoints
   const points: PathPoint[] = [];
   const segments: PathSegment[] = [];
 
@@ -68,58 +81,31 @@ export const calculateSmartPath = (
       points.push(current);
     }
 
-    // Ensure orthogonal connection between current and next point
+    // Ensure orthogonal connection with minimum bends
     if (current.x !== next.x && current.y !== next.y) {
-      // Need intermediate point to maintain orthogonal path
-      // Decide whether to go horizontal first or vertical first
-      const deltaX = Math.abs(next.x - current.x);
-      const deltaY = Math.abs(next.y - current.y);
+      // Create intermediate point for orthogonal path
+      const intermediatePoint = { x: next.x, y: current.y };
+      points.push(intermediatePoint);
       
-      if (deltaX >= deltaY) {
-        // Go horizontal first
-        const intermediatePoint = { x: next.x, y: current.y };
-        points.push(intermediatePoint);
-        
-        // Add horizontal segment
-        segments.push({
-          type: 'horizontal',
-          startX: Math.min(current.x, next.x),
-          endX: Math.max(current.x, next.x),
-          y: current.y,
-          index: segments.length,
-        });
-        
-        // Add vertical segment
-        segments.push({
-          type: 'vertical',
-          x: next.x,
-          startY: Math.min(current.y, next.y),
-          endY: Math.max(current.y, next.y),
-          index: segments.length,
-        });
-      } else {
-        // Go vertical first
-        const intermediatePoint = { x: current.x, y: next.y };
-        points.push(intermediatePoint);
-        
-        // Add vertical segment
-        segments.push({
-          type: 'vertical',
-          x: current.x,
-          startY: Math.min(current.y, next.y),
-          endY: Math.max(current.y, next.y),
-          index: segments.length,
-        });
-        
-        // Add horizontal segment
-        segments.push({
-          type: 'horizontal',
-          startX: Math.min(current.x, next.x),
-          endX: Math.max(current.x, next.x),
-          y: next.y,
-          index: segments.length,
-        });
-      }
+      // Add horizontal segment
+      segments.push({
+        type: 'horizontal',
+        startX: Math.min(current.x, next.x),
+        endX: Math.max(current.x, next.x),
+        y: current.y,
+        index: segments.length,
+        isDraggable: segments.length > 0 && segments.length < allPoints.length - 2,
+      });
+      
+      // Add vertical segment
+      segments.push({
+        type: 'vertical',
+        x: next.x,
+        startY: Math.min(current.y, next.y),
+        endY: Math.max(current.y, next.y),
+        index: segments.length,
+        isDraggable: segments.length > 0 && segments.length < allPoints.length - 2,
+      });
     } else if (current.x === next.x) {
       // Vertical segment
       segments.push({
@@ -128,6 +114,7 @@ export const calculateSmartPath = (
         startY: Math.min(current.y, next.y),
         endY: Math.max(current.y, next.y),
         index: segments.length,
+        isDraggable: segments.length > 0 && segments.length < allPoints.length - 2,
       });
     } else {
       // Horizontal segment
@@ -137,6 +124,7 @@ export const calculateSmartPath = (
         endX: Math.max(current.x, next.x),
         y: current.y,
         index: segments.length,
+        isDraggable: segments.length > 0 && segments.length < allPoints.length - 2,
       });
     }
 
@@ -153,4 +141,44 @@ export const generateSVGPath = (points: PathPoint[]): string => {
     }
     return `${path} L ${point.x},${point.y}`;
   }, '');
+};
+
+export const updatePathWithDrag = (
+  originalPath: PathCalculation,
+  segmentIndex: number,
+  deltaX: number,
+  deltaY: number,
+  sourceX: number,
+  sourceY: number,
+  targetX: number,
+  targetY: number
+): { x: number; y: number }[] => {
+  const segment = originalPath.segments[segmentIndex];
+  if (!segment || !segment.isDraggable) return [];
+
+  const waypoints: { x: number; y: number }[] = [];
+
+  if (segment.type === 'horizontal') {
+    // Moving horizontal segment vertically
+    const newY = (segment.y || 0) + deltaY;
+    
+    // Create waypoint that maintains orthogonal path
+    if (segmentIndex === 1 && originalPath.segments.length === 3) {
+      // Middle segment of 3-segment path
+      const midX = (segment.startX || 0) + ((segment.endX || 0) - (segment.startX || 0)) * 0.5;
+      waypoints.push({ x: midX, y: newY });
+    }
+  } else {
+    // Moving vertical segment horizontally
+    const newX = (segment.x || 0) + deltaX;
+    
+    // Create waypoint that maintains orthogonal path
+    if (segmentIndex === 1 && originalPath.segments.length === 3) {
+      // Middle segment of 3-segment path
+      const midY = (segment.startY || 0) + ((segment.endY || 0) - (segment.startY || 0)) * 0.5;
+      waypoints.push({ x: newX, y: midY });
+    }
+  }
+
+  return waypoints;
 };

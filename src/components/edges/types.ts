@@ -29,6 +29,7 @@ export interface PathPoint {
 export interface PathSegment {
   type: 'horizontal' | 'vertical';
   index: number;
+  isDraggable?: boolean;
   x?: number;
   y?: number;
   startX?: number;
